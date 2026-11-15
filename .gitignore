@@ -1,0 +1,191 @@
+# ============================================================
+# GARMIN ANALYTICS ENGINEERING - .gitignore
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. PYTHON - Environnements virtuels
+# ------------------------------------------------------------
+
+venv/
+.venv/
+env/
+ENV/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build / Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tests / Coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+
+# ------------------------------------------------------------
+# 2. VARIABLES D'ENVIRONNEMENT / SECRETS
+# ------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+credentials.json
+secrets.json
+
+
+# ------------------------------------------------------------
+# 3. JUPYTER NOTEBOOK
+# ------------------------------------------------------------
+
+.ipynb_checkpoints/
+
+# Fichiers temporaires
+*.tmp
+*.temp
+
+
+# ------------------------------------------------------------
+# 4. DONNÉES GARMIN
+# ------------------------------------------------------------
+
+# Fichiers sources Garmin
+data/raw/
+
+# Données intermédiaires et transformées
+data/bronze/
+data/silver/
+data/processed/
+data/staging/
+
+# Exports et téléchargements
+data/downloads/
+data/exports/
+
+# Formats de données potentiellement volumineux
+*.fit
+*.FIT
+*.tcx
+*.TCX
+*.gpx
+*.GPX
+*.parquet
+
+# Conserver les fichiers de structure
+!data/.gitkeep
+
+
+# ------------------------------------------------------------
+# 5. SEAWEEDFS / STOCKAGE S3
+# ------------------------------------------------------------
+
+# Données persistées localement
+seaweedfs-data/
+volumes/seaweedfs/
+storage/seaweedfs/
+
+
+# ------------------------------------------------------------
+# 6. POSTGRESQL
+# ------------------------------------------------------------
+
+# Données persistées localement
+postgres-data/
+pgdata/
+volumes/postgres/
+
+# Dumps et sauvegardes
+*.dump
+*.backup
+*.sql.gz
+
+
+# ------------------------------------------------------------
+# 7. DBT
+# ------------------------------------------------------------
+
+# Fichiers générés par dbt
+target/
+dbt_packages/
+logs/
+
+# Profil local dbt (peut contenir des identifiants)
+profiles.yml
+
+# Variables d'environnement dbt
+dbt.env
+
+
+# ------------------------------------------------------------
+# 8. DOCKER
+# ------------------------------------------------------------
+
+# Fichiers de surcharge propres à la machine
+docker-compose.override.yml
+compose.override.yml
+
+# Fichiers temporaires
+*.pid
+
+
+# ------------------------------------------------------------
+# 9. VS CODE / IDE
+# ------------------------------------------------------------
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+.idea/
+*.swp
+*.swo
+
+
+# ------------------------------------------------------------
+# 10. POWER BI
+# ------------------------------------------------------------
+
+# Fichiers temporaires Power BI
+*.pbit.tmp
+*.pbix.tmp
+
+# Rapports PBIX locaux potentiellement volumineux
+*.pbix
+
+# Fichiers locaux Power BI Project
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+
+# ------------------------------------------------------------
+# 11. SYSTÈME
+# ------------------------------------------------------------
+
+# Ubuntu / Linux
+*~
+.Trash-*/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+
+# ------------------------------------------------------------
+# 12. LOGS
+# ------------------------------------------------------------
+
+*.log

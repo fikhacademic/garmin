@@ -1,0 +1,207 @@
+name: garmin-analytics
+
+services:
+
+  # ==========================================
+  # PostgreSQL
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: garmin_postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - garmin-net
+
+  # ==========================================
+  # SeaweedFS - Stockage objet S3
+  # ==========================================
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: garmin_seaweedfs
+    restart: unless-stopped
+
+    command: >
+      server
+      -dir=/data
+      -s3
+      -s3.port=8333
+      -ip=seaweedfs
+
+    ports:
+      - "127.0.0.1:8333:8333"
+      - "127.0.0.1:9333:9333"
+      - "127.0.0.1:8888:8888"
+
+    volumes:
+      - seaweedfs_data:/data
+
+    networks:
+      - garmin-net
+
+  # ==========================================
+  # pgAdmin - Interface PostgreSQL
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: garmin_pgadmin
+    restart: unless-stopped
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+
+    ports:
+      - "127.0.0.1:5050:80"
+
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - garmin-net
+
+  # ==========================================
+  # Python - Ingestion Garmin
+  # ==========================================
+  python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: garmin_python
+    restart: unless-stopped
+
+    working_dir: /app
+
+    env_file:
+      - .env
+
+    environment:
+      GARMIN_FIT_DIR: /data/raw
+
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+
+      S3_ENDPOINT_URL: http://seaweedfs:8333
+      S3_BUCKET: garmin-raw
+
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+
+    volumes:
+      - .:/app
+      - ${GARMIN_FIT_DIR}:/data/raw:ro
+
+    command: tail -f /dev/null
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+
+    networks:
+      - garmin-net
+
+  # ==========================================
+  # S3 Manager - Interface web SeaweedFS
+  # ==========================================
+  s3-manager:
+    image: cloudlena/s3manager:v0.13.0
+    container_name: garmin_s3_manager
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    environment:
+      S3_1_NAME: garmin-local
+      S3_1_ENDPOINT: seaweedfs:8333
+
+      S3_1_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      S3_1_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_1_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+
+      S3_1_USE_SSL: "false"
+      S3_1_BUCKET_LOOKUP: Path
+
+      ALLOW_DELETE: "false"
+
+    depends_on:
+      - seaweedfs
+
+    networks:
+      - garmin-net
+
+  # ==========================================
+  # dbt - Transformation analytique
+  # ==========================================
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: garmin_dbt
+
+    profiles:
+      - analytics
+
+    working_dir: /app
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+
+    volumes:
+      - .:/app
+
+    command: tail -f /dev/null
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - garmin-net
+
+
+# ==========================================
+# Volumes persistants
+# ==========================================
+volumes:
+  postgres_data:
+  seaweedfs_data:
+  pgadmin_data:
+
+
+# ==========================================
+# Réseau Docker
+# ==========================================
+networks:
+  garmin-net:
+    driver: bridge

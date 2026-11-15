@@ -1,0 +1,7 @@
+fitdecode
+pandas
+boto3
+psycopg[binary]
+python-dotenv
+pyarrow
+dbt-postgres
