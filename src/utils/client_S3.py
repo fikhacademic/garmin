@@ -105,30 +105,56 @@ class S3Client:
     # FICHIER : UPLOAD
     # ---------------------------------------------------------
 
+    # def upload_file(
+    #     self,
+    #     local_path: str | Path,
+    #     object_key: str,
+    #     bucket: str | None = None
+    # ) -> None:
+    #     """Envoie un fichier local dans un bucket."""
+
+    #     name = self._check_bucket(bucket)
+
+    #     path = Path(local_path)
+
+    #     if not path.is_file():
+    #         raise FileNotFoundError(
+    #             f"Fichier introuvable : {path}"
+    #         )
+
+    #     self.client.upload_file(
+    #         str(path),
+    #         name,
+    #         object_key
+    #     )
+
+    #     print(f"Fichier '{path.name}' envoyé vers '{name}/{object_key}'.")
+
+
+
     def upload_file(
         self,
         local_path: str | Path,
-        object_key: str,
-        bucket: str | None = None
+        bucket: str,
+        prefix: str
     ) -> None:
-        """Envoie un fichier local dans un bucket."""
-
-        name = self._check_bucket(bucket)
+        """Envoie un fichier local dans un bucket S3 sous un préfixe."""
 
         path = Path(local_path)
 
         if not path.is_file():
-            raise FileNotFoundError(
-                f"Fichier introuvable : {path}"
-            )
+            raise FileNotFoundError(f"Fichier introuvable : {path}")
+
+        object_key = f"{prefix.strip('/')}/{path.name}"
 
         self.client.upload_file(
             str(path),
-            name,
+            bucket,
             object_key
         )
 
-        print(f"Fichier '{path.name}' envoyé vers '{name}/{object_key}'.")
+        print(f"Fichier envoyé : s3://{bucket}/{object_key}")
+
 
     # ---------------------------------------------------------
     # FICHIER : DOWNLOAD

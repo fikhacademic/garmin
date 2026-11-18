@@ -6,29 +6,28 @@ from collections import Counter
 
 load_dotenv()
 
-storage = S3Client()
-
-raw_dir = Path(os.environ["GARMIN_FIT_DIR"])
-
-def get_extensions(path) :
+def get_files(path) :
 
     files = [
         file for file in path.rglob("*")
         if file.is_file()
     ]
 
-    extensions = Counter(file.suffix.lower() for file in files)
-
-    liste_extensions = [ext.lstrip(".") for ext in extensions.keys()]
-
-    return liste_extensions
+    return files
 
 
 
-liste_extensions = get_extensions(raw_dir)
+def upload_files(storage, list_files) :
+    for file in list_files :
+        ext = file.suffix.lower()
+        prefix = ext.lstrip(".")
+        storage.upload_file(file,"garmin",prefix)
 
 
+if __name__ == "__main__":
 
-# for ext in liste_extensions :
-#     storage.create_bucket(ext)
+    storage = S3Client()
+    raw_dir = Path(os.environ["GARMIN_FIT_DIR"])
 
+    list_files = get_files(raw_dir)
+    upload_files(storage,list_files)
