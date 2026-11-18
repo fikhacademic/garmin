@@ -23,7 +23,11 @@ def get_extensions(path) :
 
     return liste_extensions
 
+
+
 liste_extensions = get_extensions(raw_dir)
+
+
 
 # for ext in liste_extensions :
 #     storage.create_bucket(ext)
